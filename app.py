@@ -57,7 +57,6 @@ html, body, [class*="css"] {
 </style>
 """, unsafe_allow_html=True)
 
-
 # ============================================
 # DARK MODE TOGGLE
 # ============================================
@@ -67,7 +66,6 @@ if dark:
     st.markdown("<script>document.body.classList.add('darkmode');</script>", unsafe_allow_html=True)
 else:
     st.markdown("<script>document.body.classList.remove('darkmode');</script>", unsafe_allow_html=True)
-
 
 # ============================================
 # SIDEBAR
@@ -79,13 +77,11 @@ menu = st.sidebar.radio(
     index=0 if "user" not in st.session_state or st.session_state.user is None else 1
 )
 
-
 # ============================================
 # SESSION INIT
 # ============================================
 if "user" not in st.session_state:
     st.session_state.user = None
-
 
 # ============================================
 # LOGIN PAGE
@@ -101,7 +97,7 @@ if menu == "Login" and st.session_state.user is None:
         col1, col2 = st.columns(2)
         email = col1.text_input("📧 Email")
         pwd = col2.text_input("🔑 Password", type="password")
-        submit = st.button("➡ Continue", use_container_width=True)
+        submit = st.button("➡ Continue", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
 
         if submit:
@@ -121,7 +117,6 @@ if menu == "Login" and st.session_state.user is None:
                     st.rerun()
     st.stop()
 
-
 # ============================================
 # BLOCK ACCESS IF NOT LOGGED IN
 # ============================================
@@ -129,12 +124,10 @@ if st.session_state.user is None:
     st.warning("⚠ Please login to continue.")
     st.stop()
 
-
 # ============================================
 # AFTER LOGIN HEADER
 # ============================================
 st.success(f"Welcome, **{st.session_state.user['email']}** 🎉")
-
 
 # =================================================
 # PROCESS CLAIMS
@@ -150,12 +143,12 @@ if menu == "Process Claims":
 
         st.markdown("<div class='glass'>", unsafe_allow_html=True)
         st.markdown("### 📄 File Preview")
-        st.dataframe(df, use_container_width=True, height=250)
+        st.dataframe(df, width='stretch', height=250)
         st.markdown("</div>", unsafe_allow_html=True)
 
         column = st.selectbox("Select column to normalize:", df.columns)
 
-        if st.button("🚀 Normalize Now", use_container_width=True):
+        if st.button("🚀 Normalize Now", width='stretch'):
             with st.spinner("⏳ Processing..."):
 
                 results = []
@@ -164,6 +157,8 @@ if menu == "Process Claims":
                 for idx, text in df[column].items():
                     cleaned = normalize_text(text)
                     results.append(cleaned)
+                    # Debug print to verify history
+                    print("Saving to history:", st.session_state.user["id"], text, cleaned)
                     save_to_history(st.session_state.user["id"], text, cleaned)
                     progress.progress((idx + 1) / len(df))
 
@@ -187,16 +182,16 @@ if menu == "Process Claims":
             st.markdown("### 🔍 Comparison Table")
             st.dataframe(
                 df[[column, "Normalized_Claim", "Reduction_%"]],
-                use_container_width=True,
+                width='stretch',
                 height=350
             )
 
             st.download_button(
                 "⬇ Download Result CSV",
                 df.to_csv(index=False),
-                "normalized_claims.csv"
+                "normalized_claims.csv",
+                width='stretch'
             )
-
 
 # =================================================
 # HISTORY
@@ -217,24 +212,24 @@ elif menu == "History":
         colB.metric("Latest Entry", df_hist['timestamp'].max())
 
         st.markdown("### 📜 Full Log")
-        st.dataframe(df_hist, use_container_width=True, height=380)
+        st.dataframe(df_hist, width='stretch', height=380)
 
         st.download_button(
             "⬇ Export History",
             df_hist.to_csv(index=False),
-            "history.csv"
+            "history.csv",
+            width='stretch'
         )
-
 
 # =================================================
 # ABOUT PAGE
 # =================================================
 elif menu == "About":
     st.markdown("""
-    ## ℹ️ About This App  
-    **AI-Powered Claims Text Normalizer**  
-    ✔ Cleans and standardizes claim descriptions  
-    ✔ Supports file uploads  
-    ✔ Keeps full processing history  
-    ✔ Sleek modern UI with metrics  
+    ## ℹ️ About This App
+    **AI-Powered Claims Text Normalizer**
+    ✔ Cleans and standardizes claim descriptions
+    ✔ Supports file uploads
+    ✔ Keeps full processing history
+    ✔ Sleek modern UI with metrics
     """)
