@@ -3,7 +3,7 @@
 This project is a **Claims Description Normalizer** that uses **Generative AI** (OpenAI GPT) to clean and standardize insurance claim descriptions.  
 It allows users to upload CSV files, normalize text, track history, and download results — all through an interactive **Streamlit** web app.  
 
-Live Demo: [Click here to open the app](https://usa-excited-brief-dispatched.trycloudflare.com/)
+Live Demo: [Click here to open the app](https://claims-description-normalizer-system-documentation-nfx3vn5igkh.streamlit.app/)
 
 ---
 
