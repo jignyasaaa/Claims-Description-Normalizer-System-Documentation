@@ -1,0 +1,6 @@
+streamlit
+pandas
+python-dotenv
+sqlite3-binary
+requests
+openai
