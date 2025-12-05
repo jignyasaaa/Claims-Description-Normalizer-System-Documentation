@@ -1,25 +1,27 @@
 import os
 import bcrypt
 import pandas as pd
-import openai
+import google.generativeai as genai
 from supabase import create_client, Client
 
-# ============================================
+# =====================================================
 # LOAD ENVIRONMENT KEYS
-# ============================================
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# =====================================================
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
+# Gemini Config
+genai.configure(api_key=GEMINI_KEY)
+
 # Connect Supabase
 db_enabled = SUPABASE_URL not in [None, "", "YOUR_SUPABASE_URL"]
-
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if db_enabled else None
 
 
-# ============================================
+# =====================================================
 # AUTH FUNCTIONS
-# ============================================
+# =====================================================
 def register_user(email, password):
     if not db_enabled:
         return None, "⚠ Database Disabled — running in demo mode."
@@ -43,6 +45,7 @@ def login_user(email, password):
         return {"email": email, "id": "demo_user"}, None
 
     res = supabase.table("users").select("*").eq("email", email).execute()
+
     if not res.data:
         return None, "User not found."
 
@@ -54,27 +57,27 @@ def login_user(email, password):
     return None, "Incorrect password."
 
 
-# ============================================
-# AI NORMALIZATION
-# ============================================
+# =====================================================
+# GEMINI NORMALIZATION
+# =====================================================
 def normalize_text(text):
+    """
+    Uses Google Gemini to professionally normalize messy claim descriptions.
+    """
     try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Standardize and professionally rewrite insurance claim descriptions."},
-                {"role": "user", "content": text}
-            ]
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(
+            f"Rewrite this insurance claim professionally and clearly:\n\n{text}"
         )
-        return response.choices[0].message.content.strip()
+        return response.text.strip()
 
     except Exception as e:
         return f"[AI ERROR] {e}"
 
 
-# ============================================
-# SAVE PROCESSING HISTORY TO SUPABASE
-# ============================================
+# =====================================================
+# SAVE TO SUPABASE
+# =====================================================
 def save_to_history(user_id, original, normalized):
     if db_enabled:
         try:
@@ -88,38 +91,20 @@ def save_to_history(user_id, original, normalized):
             print("❌ Error saving to Supabase:", e)
 
 
-# ============================================
-# FETCH HISTORY FOR USER
-# ============================================
+# =====================================================
+# FETCH USER HISTORY
+# =====================================================
 def fetch_history(user_id):
     if not db_enabled:
         return []
-
     try:
-        # Try ordering by common timestamp names
-        possible_ts_columns = ["created_at", "timestamp", "inserted_at", "createdAt"]
-        data = None
-
-        for col in possible_ts_columns:
-            try:
-                data = supabase.table("claims") \
-                    .select("*") \
-                    .eq("user_id", user_id) \
-                    .order(col, desc=True) \
-                    .execute().data
-                if data:
-                    return data
-            except:
-                continue  # Try next timestamp field
-
-        # Fallback: no ordering
-        data = supabase.table("claims") \
+        res = supabase.table("claims") \
             .select("*") \
             .eq("user_id", user_id) \
-            .execute().data
+            .order("created_at", desc=True) \
+            .execute()
 
-        return data
-
+        return res.data
     except Exception as e:
         print("❌ Error fetching history:", e)
         return []
